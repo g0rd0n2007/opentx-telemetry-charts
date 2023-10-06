@@ -10,6 +10,8 @@ Value format. In this case float with 2 digits after dot:
 Value unit:
 - valueUnit = "[V]"
 
+To clear all samples - long press Ent/OK button. It is usefull between flights.
+
 ![Lipo](https://github.com/g0rd0n2007/opentx-telemetry-charts/blob/main/20231006_211725.jpg)
 
 ![RPM](https://github.com/g0rd0n2007/opentx-telemetry-charts/blob/main/20231006_211733.jpg)
