@@ -11,6 +11,8 @@ File name:
 Each row contains:
 - Hour;MinValue;MaxValue
 
+![CSV](https://github.com/g0rd0n2007/opentx-telemetry-charts/blob/main/Zrzut%20ekranu%20z%202023-10-07%2019-38-39.png)
+
 You can use excel stock charts to properly view it. Use min value as open value and max as close value.
 
 
