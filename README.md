@@ -1,4 +1,22 @@
 ## OpenTX Telemetry Charts
+
+# Multi.lua
+
+This is next version of chart script. It combines all sensors into one script. On Taranis X7 You can switch between sensors with rotativ knob.
+Moreover, it saves CSV files into /LOGS directory. It creates separated file for each sensor.
+
+File name:
+- SensorName + Date
+
+Each row contains:
+- Hour;MinValue;MaxValue
+
+You can use excel stock charts to properly view it. Use min value as open value and max as close value.
+
+
+
+# Lipo.lua, RPM.lua, Curr.lua
+
 Just change first lines to configure the script.
 
 Name of Your sensor:
