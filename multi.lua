@@ -102,7 +102,12 @@ local function background()
                 
                 --Save last data point to CSV file on SD card
                 if Pages[p].values[#Pages[p].values].min ~= nil and Pages[p].values[#Pages[p].values].max ~= nil then
-                    appendToCSV(Pages[p].name, Pages[p].values[#Pages[p].values].min, Pages[p].values[#Pages[p].values].max)
+                    appendToCSV(
+                        model.getInfo().name,
+                        Pages[p].name, 
+                        Pages[p].values[#Pages[p].values].min, 
+                        Pages[p].values[#Pages[p].values].max
+                    )
                 end
                 
                 if #Pages[p].values >= maxValuesCount then
@@ -201,12 +206,12 @@ end
 
 
 local CsvID = 1
-function appendToCSV(sensor_name, number1, number2)
+function appendToCSV(modelName, sensorName, number1, number2)
     -- Pobierz aktualną datę i godzinę
     local dt = getDateTime()
     
     
-    local filename = string.format("/LOGS/%s %04d-%02d-%02d.csv", sensor_name, dt.year, dt.mon, dt.day)
+    local filename = string.format("/LOGS/%s %s %04d-%02d-%02d.csv", modelName, sensorName, dt.year, dt.mon, dt.day)
     local f = io.open(filename, "a")  -- Otwórz plik w trybie dołączania ("a")
 
     local txt = string.format("%d:%02d:%02d;%.2f;%.2f\n", dt.hour, dt.min, dt.sec, number1, number2)
