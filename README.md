@@ -5,6 +5,8 @@
 This is next version of chart script. It combines all sensors into one script. On Taranis X7 You can switch between sensors with rotativ knob.
 Moreover, it saves CSV files into /LOGS directory. It creates separated file for each sensor.
 
+![RPM](https://github.com/g0rd0n2007/opentx-telemetry-charts/blob/main/20231007_194238.jpg)
+
 File name:
 - SensorName + Date
 
