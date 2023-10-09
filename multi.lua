@@ -35,7 +35,7 @@ local function createGraph(page)
 
         lcd.drawText(0, 35, string.format("%." .. page.prec .. "f", page.mid), SMLSIZE)
     end
-    if page.min ~= nil then 
+    if page.min ~= nil and page.min ~= math.huge then 
         lcd.drawText(0, 55, string.format("%." .. page.prec .. "f", page.min), SMLSIZE)
     end
 
@@ -59,7 +59,8 @@ local function createGraph(page)
             end        
         end
     else 
-        lcd.drawText(47, 33, "Enable by [MNU]", SMLSIZE)
+        lcd.drawText(50, 25, "[MNU] - Enable", SMLSIZE)
+        lcd.drawText(43, 40, "[OK] - Clear data", SMLSIZE)
     end
     
     
@@ -158,8 +159,10 @@ local function run(event)
         else
             Pages[PageIdx].enabled = false
             Pages[PageIdx].values={
-                min=math.huge,
-                max=0
+                {
+                    min=math.huge,
+                    max=0
+                }
             }
         end        
     elseif event == EVT_ROT_RIGHT or event == EVT_MENU_BREAK then--EVT_MENU_BREAK then
