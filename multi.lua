@@ -1,9 +1,9 @@
-local timeBetweenSamples = 500 --oznacza co 5 sek
+local timeBetweenSamples = 50 --oznacza co 5 sek
 local axisX, axisY = 35, 10
 
 
 
-local maxValuesCount = 80
+local maxValuesCount = 93
 local lcdWidth, lcdHeight = 128, 64    
 local graphHeight = lcdHeight - axisY - 1
 
@@ -26,7 +26,7 @@ local function createGraph(page)
     lcd.drawLine(axisX - 1, axisY - 1, axisX - 1, 63, DOTTED, 0)
 
     if page.max ~= nil then        
-        lcd.drawText(0, 15, string.format("%." .. page.prec .. "f", page.max), SMLSIZE)
+        lcd.drawText(0, 10, string.format("%." .. page.prec .. "f", page.max), SMLSIZE)
     end
     if page.mid ~= nil and page.mid ~= math.huge and page.mid ~= page.min and page.mid ~= page.max then
         local y = calcPixelY(page, range, page.mid)
@@ -42,23 +42,25 @@ local function createGraph(page)
 
 
 
-    
-    --local prevX, prevY = nil, nil
-    for i, v in ipairs(page.values) do
-        local x = axisX + i - 1
-        local y1 = calcPixelY(page, range, v.min) --lcdHeight - 1 - ((v - minValue) / range) * graphHeight
-        local y2 = calcPixelY(page, range, v.max)
+    if page.enabled then
+        --local prevX, prevY = nil, nil
+        for i, v in ipairs(page.values) do
+            local x = axisX + i - 1
+            local y1 = calcPixelY(page, range, v.min) --lcdHeight - 1 - ((v - minValue) / range) * graphHeight
+            local y2 = calcPixelY(page, range, v.max)
 
-        if page.min <= v.min and v.min <= page.max and page.min <= v.max and v.max <= page.max then
-            --if prevX and prevY then
-            lcd.drawLine(x, y1, x, y2, SOLID, 0)
-            --end
-            --lcd.drawPoint(x, y)
+            if page.min <= v.min and v.min <= page.max and page.min <= v.max and v.max <= page.max then
+                --if prevX and prevY then
+                lcd.drawLine(x, y1, x, y2, SOLID, 0)
+                --end
+                --lcd.drawPoint(x, y)
 
-            --prevX, prevY = x, y
-        end        
+                --prevX, prevY = x, y
+            end        
+        end
+    else 
+        lcd.drawText(47, 33, "Enable by [MNU]", SMLSIZE)
     end
-
     
     
     lcd.drawText(0, 0, string.format("%d/%d %s: %." .. page.prec .. "f", PageIdx, #Pages, page.name, page.currentValue), SMLSIZE)
@@ -75,7 +77,7 @@ local function background()
         --local p = PageIdx
         local newValue = getValue(Pages[p].name)
 
-        if newValue and type(newValue) == "number" then
+        if newValue and type(newValue) == "number" and Pages[p].enabled then
             Pages[p].currentValue = newValue
 
             --Min/Max całego wykresu
@@ -137,11 +139,7 @@ local function background()
 end
 
 local function run(event)
-    if event == EVT_ENTER_LONG then
-        --old
-        values = {}
-
-        --new
+    if event == EVT_ENTER_BREAK then
         for p = 1, #Pages do
             Pages[p].values = {
                 {
@@ -154,6 +152,16 @@ local function run(event)
             Pages[p].max=0
             Pages[p].lastSampleTime=0
         end
+    elseif event == EVT_MENU_BREAK then
+        if Pages[PageIdx].enabled == false then
+            Pages[PageIdx].enabled = true
+        else
+            Pages[PageIdx].enabled = false
+            Pages[PageIdx].values={
+                min=math.huge,
+                max=0
+            }
+        end        
     elseif event == EVT_ROT_RIGHT or event == EVT_MENU_BREAK then--EVT_MENU_BREAK then
         if PageIdx < #Pages then
             PageIdx = PageIdx + 1
@@ -194,7 +202,8 @@ local function init_func()
                 max=0,
                 lastSampleTime=0,
                 prec=sensor.prec,
-                currentValue=0
+                currentValue=0,
+                enabled=false
             }            
         else
             break
