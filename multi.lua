@@ -1,4 +1,4 @@
-local timeBetweenSamples = 50 --oznacza co 5 sek
+local timeBetweenSamples = 100 --1 -> 0.01 sec
 local axisX, axisY = 35, 10
 
 
@@ -42,7 +42,7 @@ local function createGraph(page)
 
 
 
-    if page.enabled then
+    if page.enabled == 1 then
         --local prevX, prevY = nil, nil
         for i, v in ipairs(page.values) do
             local x = axisX + i - 1
@@ -63,8 +63,25 @@ local function createGraph(page)
         lcd.drawText(43, 40, "[OK] - Clear data", SMLSIZE)
     end
     
+    --Full list: https://doc.open-tx.org/opentx-2-3-lua-reference-guide/part_vii_-_appendix/units
+    local unit=""
+    if page.unit==1 then
+        unit="[V]"
+    elseif page.unit==2 then
+        unit="[A]"
+    elseif page.unit==11 then
+        unit="[*C]"
+    elseif page.unit==12 then
+        unit="[*F]"
+    elseif page.unit==17 then
+        unit="[dB]"
+    elseif page.unit==18 then
+        unit="[RPM]"
+    end
+
+
     
-    lcd.drawText(0, 0, string.format("%d/%d %s: %." .. page.prec .. "f", PageIdx, #Pages, page.name, page.currentValue), SMLSIZE)
+    lcd.drawText(0, 0, string.format("%d/%d %s: %." .. page.prec .. "f %s", PageIdx, #Pages, page.name, page.currentValue, unit), SMLSIZE)
     --lcd.drawNumber(LCD_W/2, 0, page.values[#page.values].max, SMLSIZE)
     --if page.#values > 0 then
     --    lcd.drawText(70, 0, string.format(page.valueFormat .. " " .. page.valueUnit, values[#values]), SMLSIZE)
@@ -78,7 +95,7 @@ local function background()
         --local p = PageIdx
         local newValue = getValue(Pages[p].name)
 
-        if newValue and type(newValue) == "number" and Pages[p].enabled then
+        if newValue and type(newValue) == "number" and Pages[p].enabled == 1 then
             Pages[p].currentValue = newValue
 
             --Min/Max całego wykresu
@@ -154,17 +171,18 @@ local function run(event)
             Pages[p].lastSampleTime=0
         end
     elseif event == EVT_MENU_BREAK then
-        if Pages[PageIdx].enabled == false then
-            Pages[PageIdx].enabled = true
+        if Pages[PageIdx].enabled == 0 then
+            Pages[PageIdx].enabled = 1
         else
-            Pages[PageIdx].enabled = false
+            Pages[PageIdx].enabled = 0
             Pages[PageIdx].values={
                 {
                     min=math.huge,
                     max=0
                 }
             }
-        end        
+        end       
+        saveSettings() 
     elseif event == EVT_ROT_RIGHT or event == EVT_MENU_BREAK then--EVT_MENU_BREAK then
         if PageIdx < #Pages then
             PageIdx = PageIdx + 1
@@ -179,7 +197,7 @@ local function run(event)
         end
     else
         lcd.clear()
-        createGraph(Pages[PageIdx])
+        createGraph(Pages[PageIdx]) 
     end
 end
 
@@ -206,13 +224,16 @@ local function init_func()
                 lastSampleTime=0,
                 prec=sensor.prec,
                 currentValue=0,
-                enabled=false
+                enabled=0,
+                unit=sensor.unit
             }            
         else
             break
         end
         index = index + 1
     end
+
+    readSettings()
 end
 
 
@@ -231,6 +252,44 @@ function appendToCSV(modelName, sensorName, number1, number2)
     io.write(f, txt2)
     CsvID = CsvID + 1
     io.close(f)
+end
+
+function readSettings()
+    local updates={}
+    local line
+
+    f = io.open("/SCRIPTS/TELEMETRY/settings.txt", "r")
+    if f then
+        repeat
+            line = io.read(f, 13)
+            --line = io.read(f, 13)
+            if line and line ~= nil then
+                local key, value = string.match(line, "([%w]+)%s*=([%w]+)")
+                if key and value then
+                    updates[key] = value
+                    lcd.drawText(0, 50, string.format("%s : %s", key, value), SMLSIZE) 
+                    
+                end
+            end
+        until string.len(line) == 0
+
+        -- Aktualizuj Pages na podstawie odczytanych danych
+        for _, page in ipairs(Pages) do
+            if updates[page.name] ~= nil then
+                page.enabled = tonumber(updates[page.name])
+            end
+        end
+    end
+end
+
+function saveSettings()
+    local f = io.open("/SCRIPTS/TELEMETRY/settings.txt", "w")
+    if f then        
+        for key, value in pairs(Pages) do
+            io.write(f, string.format("%-10s=%d\n", value.name, value.enabled))
+        end
+        io.close(f)
+    end
 end
 
 return {
