@@ -8,6 +8,7 @@ local graphWidth, graphHeight = 97, 53
 local Pages = {}
 local PageIdx = 1
 local lastSampleTime = 0
+local settings_file = "/SCRIPTS/TELEMETRY/settings.txt"
 
 local function calcChartY(page, range, v)    
     return axisY + graphHeight - 2 - (v - page.min) * (graphHeight - 3) / range
@@ -42,24 +43,26 @@ local function createGraph(page)
     lcd.drawRectangle(axisX, axisY, graphWidth, graphHeight, SOLID)
 
     -- Max
-    if page.max ~= nil and page.max ~= math.huge then        
+    if page.max and page.max ~= math.huge then        
         lcd.drawText(1, axisY, string.format("%." .. page.prec .. "f", page.max), SMLSIZE)
     end    
 
     -- Cursor value
-    local vc = (page.values[page.cursor].max + page.values[page.cursor].min) / 2
-    local yc = calcChartY(page, range, vc) 
-    if yc < axisY + 15 then yc = axisY + 15 end
-    if yc > axisY + graphHeight - 12 then yc = axisY + graphHeight - 12 end
-    lcd.drawText(
-        1, 
-        yc - 5, 
-        string.format("%." .. page.prec .. "f", vc), 
-        SMLSIZE
-    )
+    if page.min and page.max and page.max ~= math.huge then
+        local vc = (page.values[page.cursor].max + page.values[page.cursor].min) / 2
+        local yc = calcChartY(page, range, vc) 
+        if yc < axisY + 15 then yc = axisY + 15 end
+        if yc > axisY + graphHeight - 12 then yc = axisY + graphHeight - 12 end
+        lcd.drawText(
+            1, 
+            yc - 5, 
+            string.format("%." .. page.prec .. "f", vc), 
+            SMLSIZE
+        )
+    end
 
     -- Min
-    if page.min ~= nil and page.min ~= math.huge then 
+    if page.min and page.min ~= math.huge then 
         lcd.drawText(1, axisY + graphHeight - 7, string.format("%." .. page.prec .. "f", page.min), SMLSIZE)
     end
 
@@ -68,13 +71,15 @@ local function createGraph(page)
 
     if page.enabled == 1 then
         for i, v in ipairs(page.values) do
-            local x = axisX + i - page.offset            
-            local y1 = calcChartY(page, range, v.min) --axisY + graphHeight - 2 - (v.max - page.min) * (graphHeight - 3) / range
-            local y2 = calcChartY(page, range, v.max) --axisY + graphHeight - 2 - (v.min - page.min) * (graphHeight - 3) / range
+            if v and v.min and v.max and v.min <= v.max then
+                local x = axisX + i - page.offset            
+                local y1 = calcChartY(page, range, v.min) --axisY + graphHeight - 2 - (v.max - page.min) * (graphHeight - 3) / range
+                local y2 = calcChartY(page, range, v.max) --axisY + graphHeight - 2 - (v.min - page.min) * (graphHeight - 3) / range
 
-            if axisX < x and x < axisX + graphWidth then
-                lcd.drawLine(x, y1, x, y2, SOLID, 0)
-            end            
+                if axisX < x and x < axisX + graphWidth then
+                    lcd.drawLine(x, y1, x, y2, SOLID, 0)
+                end            
+            end
         end
 
         -- Cursor
@@ -158,6 +163,11 @@ local function background()
 end
 
 local function run(event)
+
+    --[[if #Pages == 0 then 
+        message("No sensors")
+        return
+    end]]--
     --EVT_MENU_LONG
     --EVT_ENTER_BREAK
     --EVT_ROT_RIGHT
@@ -181,14 +191,17 @@ local function run(event)
         -- Enable/Disable
         if Pages[PageIdx].enabled == 0 then
             Pages[PageIdx].enabled = 1
-        else
-            Pages[PageIdx].enabled = 0
+            Pages[PageIdx].cursor = 1
             Pages[PageIdx].values={
                 {
                     min=math.huge,
                     max=0
                 }
             }
+            Pages[PageIdx].min = math.huge
+            Pages[PageIdx].max = 0
+        else
+            Pages[PageIdx].enabled = 0            
         end       
         saveSettings() 
     elseif event == EVT_MENU_BREAK then
@@ -216,8 +229,12 @@ local function run(event)
             Pages[PageIdx].cursor = Pages[PageIdx].cursor - 1        
         end
     else
-        lcd.clear()
-        createGraph(Pages[PageIdx]) 
+        if #Pages > 0 then
+            lcd.clear()
+            createGraph(Pages[PageIdx]) 
+        else
+            message("No sensors")
+        end
     end
 end
 
@@ -262,21 +279,28 @@ end
 function readSettings()
     local updates={}
     local line
+    
 
-    f = io.open("/SCRIPTS/TELEMETRY/settings.txt", "r")
+    f = io.open(settings_file, "r")
+    if not f then
+        f = io.open(settings_file, "w")
+        if f then io.close(f) end        
+        f = io.open(settings_file, "r")
+    end
+
     if f then
         repeat
-            line = io.read(f, 13)
-            --line = io.read(f, 13)
-            if line and line ~= nil then
+            line = io.read(f, 64)
+            if line then
                 local key, value = string.match(line, "([%w]+)%s*=([%w]+)")
                 if key and value then
                     updates[key] = value
-                    lcd.drawText(0, 50, string.format("%s : %s", key, value), SMLSIZE) 
+                    --lcd.drawText(0, 50, string.format("%s : %s", key, value), SMLSIZE) 
                     
                 end
             end
         until string.len(line) == 0
+        io.close(f)
 
         -- Aktualizuj Pages na podstawie odczytanych danych
         for _, page in ipairs(Pages) do
@@ -288,13 +312,19 @@ function readSettings()
 end
 
 function saveSettings()
-    local f = io.open("/SCRIPTS/TELEMETRY/settings.txt", "w")
+    local f = io.open(settings_file, "w")
     if f then        
         for key, value in pairs(Pages) do
             io.write(f, string.format("%-10s=%d\n", value.name, value.enabled))
         end
         io.close(f)
     end
+end
+
+function message(text)
+    lcd.clear()
+    lcd.drawRectangle(10, 10, lcdWidth - 20, lcdHeight - 20, SOLID)
+    lcd.drawText(lcdWidth / 2 - 5 * #text / 2, lcdHeight / 2 - 5, text, MDLSIZE)
 end
 
 return {
