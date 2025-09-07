@@ -14,23 +14,12 @@ local function calcChartY(page, range, v)
     return axisY + graphHeight - 2 - (v - page.min) * (graphHeight - 3) / range
 end
 
+local Units={"", "V", "A", "mA", "knt", "mps", "fps", "kph", "mph", "m", "ft", "*C", "*F", "%", "mAh", "W", "mW", "dB", "RPM", "G", "deg", "rad", "mL", "fo", "mLpm", "h", "m", "s", "", "", "", "", ""};
+
 local function createGraph(page)
     --Full list: https://doc.open-tx.org/opentx-2-3-lua-reference-guide/part_vii_-_appendix/units
-    local unit=""
-    if page.unit==1 then
-        unit="V"
-    elseif page.unit==2 then
-        unit="A"
-    elseif page.unit==11 then
-        unit="*C"
-    elseif page.unit==12 then
-        unit="*F"
-    elseif page.unit==17 then
-        unit="dB"
-    elseif page.unit==18 then
-        unit="RPM"
-    end
-    
+    local unit=Units[page.unit+1];
+        
     lcd.drawText(1, 1, string.format("%s: %." .. page.prec .. "f [%s]", page.name, page.currentValue, unit), SMLSIZE)
     lcd.drawText(lcdWidth - 20, 1, string.format("%d/%d", PageIdx, #Pages), SMLSIZE)
     
@@ -259,7 +248,7 @@ local function init_func()
                 max=0,                
                 prec=sensor.prec,
                 currentValue=0,
-                enabled=0,
+                enabled=1,
                 unit=sensor.unit,
                 offset=0,
                 cursor=1
