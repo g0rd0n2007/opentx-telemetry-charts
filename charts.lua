@@ -248,7 +248,7 @@ local function init_func()
                 max=0,                
                 prec=sensor.prec,
                 currentValue=0,
-                enabled=1,
+                enabled=0,
                 unit=sensor.unit,
                 offset=0,
                 cursor=1
