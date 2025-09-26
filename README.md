@@ -20,7 +20,17 @@ Here are some pictures:
 
 ### Color charts for TX16S
 
-Copy `Multigraph` folder to Your radio `SDCARD/WIDGETS` folder. Then select new widget in the same way as other widgets. 
+Copy `Multigraph` folder to Your radio `SDCARD/WIDGETS` folder. Then select new widget in the same way as other widgets. In widget settings You will find:
+
+- Source1-4: Choose source 
+
+- Color1-4: Select color
+
+- MaxSamples: How many points chart have
+
+- Time: How quickly to take new sample. 10 means 0.1sec, 100 means 1sec.
+  
+  
 
 Standard size
 
