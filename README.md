@@ -18,20 +18,14 @@ Here are some pictures:
 
 ![4.png](/images/3.png)
 
-
-
 ### Color charts for TX16S
 
 Copy `Multigraph` folder to Your radio `SDCARD/WIDGETS` folder. Then select new widget in the same way as other widgets. 
-
-
 
 Standard size
 
 ![10.jpg](/images/10.jpg)
 
-
-
 Full screen
 
-![12.jpg](/12.jpg)
+![12.jpg](/images/12.jpg)
