@@ -10,11 +10,17 @@ local options = {
   { "MaxSamples", VALUE, 100, 50, 500 },
   { "Time", VALUE, 100, 10, 500 }
 }
+local c_units = { 
+  "V", "A", "mA", "kts", "m/s", "f/s", "km/h", "m/h", "m", 
+  "ft", "*C", "*F", "%", "mAh", "W", "mW", "dB", "rpm", "G", 
+  "deg", "rad", "mL", "foz", "mL/m", "", "", "", "", "",
+  "", "", "", "", "", "H", "M", "S", "Cells", "dt", 
+  "GPS", "bf", "txt" }
 
 local history = { {}, {}, {}, {} }
 local minmax = { {min = 0, max = 0}, {min = 0, max = 0}, {min = 0, max = 0}, {min = 0, max = 0} }
 local names = { "S1", "S2", "S3", "S4" }
-local units = { "", "", "", "" }
+local units = { 0, 0, 0, 0 }
 local prec = { 0, 0, 0, 0 }
 
 local function create(zone, options)
@@ -33,7 +39,7 @@ local function update(widget, options)
   minmax = { {min = 0, max = 0}, {min = 0, max = 0}, {min = 0, max = 0}, {min = 0, max = 0} }
 
   names = { "S1", "S2", "S3", "S4" }
-  units = { "", "", "", "" }
+  units = { 0, 0, 0, 0 }
   prec = { 0, 0, 0, 0 }
 end
 
@@ -144,26 +150,41 @@ local function refresh(widget)
       else
         --Telemetry
         names[i] = getSourceName(srcs[i])        
-        if model and model.getFieldInfo then
-          local info = model.getFieldInfo(srcs[i])
-          if info then
-            units[i] = info.unit
-            prec[i] = info.prec            
-          end
+        names[i] = string.sub(names[i], 3)        
+
+        local s = 0
+        while true do
+          local sensor = model.getSensor(s)
+          if sensor and sensor.name and sensor.name ~= "" then
+            if sensor.name == names[i] then
+              units[i]=sensor.unit
+              prec[i]=sensor.prec                
+            end
+          else
+            break
+          end       
+
+          s = s + 1
         end
+        
       end
       
       
       local tx = x + 5 + (i - 1) * (w / 4)
       
       --Current value with source name and unit      
-      if not units[i] or #units[i] == 0 then lcd.drawText(tx, y + 5, string.format("%s: %." .. prec[i] .."f", names[i], history[i][#history[i]] or 0.0), SMLSIZE + cls[i]) 
-      else lcd.drawText(tx, y + 5, string.format("%s: %." .. prec[i] .."f [%s]", names[i], history[i][#history[i]] or 0.0, units[i]), SMLSIZE + cls[i]) end
+      if not units[i] or units[i] == 0 then 
+        lcd.drawText(tx, y + 5, string.format("%s: %." .. prec[i] .."f", names[i], history[i][#history[i]] or 0.0), SMLSIZE + cls[i]) 
+        lcd.drawText(tx, y + h - 5 - 30, string.format("Max: %." .. prec[i] .. "f", minmax[i].max or 0.0), SMLSIZE + cls[i])
+        lcd.drawText(tx, y + h - 5 - 15, string.format("Min: %." .. prec[i] .. "f", minmax[i].min or 0.0), SMLSIZE + cls[i])
+      else 
+        lcd.drawText(tx, y + 5, string.format("%s: %." .. prec[i] .."f [%s]", names[i], history[i][#history[i]] or 0.0, c_units[units[i]]), SMLSIZE + cls[i]) 
+        lcd.drawText(tx, y + h - 5 - 30, string.format("Max: %." .. prec[i] .. "f [%s]", minmax[i].max or 0.0, c_units[units[i]]), SMLSIZE + cls[i])
+        lcd.drawText(tx, y + h - 5 - 15, string.format("Min: %." .. prec[i] .. "f [%s]", minmax[i].min or 0.0, c_units[units[i]]), SMLSIZE + cls[i])
+      end
 
-      --Max
-      lcd.drawText(tx, y + h - 5 - 30, string.format("Max: %.0f", minmax[i].max or 0.0), SMLSIZE + cls[i])
-      --Min
-      lcd.drawText(tx, y + h - 5 - 15, string.format("Min: %.0f", minmax[i].min or 0.0), SMLSIZE + cls[i])
+      
+      
     
       local range = minmax[i].max - minmax[i].min
       if range <= 0 then range = 0.1 end

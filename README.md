@@ -29,8 +29,6 @@ Copy `Multigraph` folder to Your radio `SDCARD/WIDGETS` folder. Then select new 
 - MaxSamples: How many points chart have
 
 - Time: How quickly to take new sample. 10 means 0.1sec, 100 means 1sec.
-  
-  
 
 Standard size
 
@@ -39,3 +37,11 @@ Standard size
 Full screen
 
 ![12.jpg](/images/12.jpg)
+
+New upgrade with correct precision and unit description
+
+![13.jpg](/images/13.jpg)
+
+
+
+From experience - to dont exceed CPU limit - dont exceed 100 points for 4 channels. If You want more points then decrease monitored channels number to 3, 2 or 1.
