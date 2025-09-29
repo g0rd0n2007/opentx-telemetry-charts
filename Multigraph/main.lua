@@ -1,3 +1,8 @@
+--[[
+EdgeTX 2.11.3
+Tested on TX16S
+]]--
+
 local options = {  
   { "Source1", SOURCE, 0 },
   { "Source2", SOURCE, 0 },
@@ -23,56 +28,14 @@ local names = { "S1", "S2", "S3", "S4" }
 local units = { 0, 0, 0, 0 }
 local prec = { 0, 0, 0, 0 }
 
-local function create(zone, options)
-  local widget = {
-    zone = zone,
-    options = options,
-    tick = 0,
-    lastUpdate = 0    
-  }
-  return widget
-end
-
-local function update(widget, options)
-  widget.options = options
-  history = { {}, {}, {}, {} }
-  minmax = { {min = 0, max = 0}, {min = 0, max = 0}, {min = 0, max = 0}, {min = 0, max = 0} }
-
-  names = { "S1", "S2", "S3", "S4" }
-  units = { 0, 0, 0, 0 }
-  prec = { 0, 0, 0, 0 }
-end
-
-local function background(widget)
-  
-end
-
-local function refresh(widget)
-  -- Użycie opcji:
+local function getData(widget)
   local srcs = { 
     widget.options.Source1,
     widget.options.Source2,
     widget.options.Source3,
     widget.options.Source4
   }
-  local cls = { 
-    widget.options.Color1,
-    widget.options.Color2,
-    widget.options.Color3,
-    widget.options.Color4
-  }
-  local ms = widget.options.MaxSamples
-  local x = widget.zone.x
-  local y = widget.zone.y
-  local w = widget.zone.w
-  local h = widget.zone.h
-  
-  
-  
-  
-  
- 
-  
+
   --Zbieranie danych
   widget.tick = (widget.tick or 0) + 1
   local currentTime = getTime()
@@ -97,12 +60,64 @@ local function refresh(widget)
             table.insert(history[i], 0)
         end
 
-        while #history[i] > ms do
+        while #history[i] > widget.options.MaxSamples do
           table.remove(history[i], 1)
         end          
       end
     end
   end
+end
+
+local function create(zone, options)
+  local widget = {
+    zone = zone,
+    options = options,
+    tick = 0,
+    lastUpdate = 0    
+  }
+  return widget
+end
+
+local function update(widget, options)
+  widget.options = options
+  history = { {}, {}, {}, {} }
+  minmax = { {min = 0, max = 0}, {min = 0, max = 0}, {min = 0, max = 0}, {min = 0, max = 0} }
+
+  names = { "S1", "S2", "S3", "S4" }
+  units = { 0, 0, 0, 0 }
+  prec = { 0, 0, 0, 0 }
+end
+
+local function background(widget)
+  getData(widget)
+end
+
+local function refresh(widget)
+  -- Użycie opcji:
+  local srcs = { 
+    widget.options.Source1,
+    widget.options.Source2,
+    widget.options.Source3,
+    widget.options.Source4
+  }
+  local cls = { 
+    widget.options.Color1,
+    widget.options.Color2,
+    widget.options.Color3,
+    widget.options.Color4
+  }  
+  local x = widget.zone.x
+  local y = widget.zone.y
+  local w = widget.zone.w
+  local h = widget.zone.h
+  
+  
+  
+  
+  getData(widget)
+ 
+  
+  
 
 
 
@@ -130,22 +145,22 @@ local function refresh(widget)
       if srcs[i] >= 1 and srcs[i] <= 32 then 
         --Channel
         names[i] = "CH" .. srcs[i]
-        units[i] = ""
+        units[i] = 0
         prec[i] = 0
       elseif srcs[i] >= 33 and srcs[i] <= 64 then
         --Input
         names[i] = "I" .. (srcs[i] - 32)
-        units[i] = ""
+        units[i] = 0
         prec[i] = 2
       elseif srcs[i] >= 65 and srcs[i] <= 96 then
         --pot
         names[i] = "POT" .. (srcs[i] - 64)
-        units[i] = "%"
+        units[i] = 13
         prec[i] = 0
       elseif srcs[i] >= 97 and srcs[i] <= 128 then
         --switch
         names[i] = "SW" .. (srcs[i] - 96)
-        units[i] = ""
+        units[i] = 0
         prec[i] = 0
       else
         --Telemetry
@@ -203,6 +218,8 @@ local function refresh(widget)
         local y2 = gy + gh - (v2 - minmax[i].min) * scale
 
         lcd.drawLine(x1, y1, x2, y2, SOLID, CUSTOM_COLOR)
+        
+        
       end
       
     end
